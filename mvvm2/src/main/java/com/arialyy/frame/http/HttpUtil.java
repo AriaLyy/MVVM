@@ -42,6 +42,7 @@ import okhttp3.Response;
 public class HttpUtil {
     private static final String TAG = "HttpUtil";
     private Context mContext = null;
+    private OkHttpClient okHttpClient;
     private static volatile HttpUtil mUtil = null;
     private static final Object LOCK = new Object();
     private CacheUtil mCacheUtil;
@@ -58,6 +59,8 @@ public class HttpUtil {
         mContext = context;
         mCacheUtil = new CacheUtil(mContext, false);
         mHandler = new Handler(Looper.getMainLooper());
+        okHttpClient = new OkHttpClient.Builder().connectTimeout(TIME_OUT, TimeUnit.MILLISECONDS)
+                .writeTimeout(TIME_OUT, TimeUnit.MILLISECONDS).readTimeout(300000, TimeUnit.MILLISECONDS).build();
     }
 
     public static HttpUtil getInstance(Context context) {
@@ -200,12 +203,8 @@ public class HttpUtil {
             L.v(TAG, "请求参数为 >>>> ");
             L.m(params);
         }
-
-        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(TIME_OUT, TimeUnit.MILLISECONDS)
-                .writeTimeout(TIME_OUT, TimeUnit.MILLISECONDS).readTimeout(300000, TimeUnit.MILLISECONDS).build();
         final Request request = new Request.Builder().url(requestUrl).build();
-        Call call = client.newCall(request);
-
+        Call call = okHttpClient.newCall(request);
         //请求加入调度
         call.enqueue(new Callback() {
             @Override
@@ -245,8 +244,6 @@ public class HttpUtil {
                      final Map<String, String> header, @NonNull final IResponse absResponse,
                      final boolean useCache) {
         L.v(TAG, "请求链接 >>>> " + url);
-        OkHttpClient client = new OkHttpClient.Builder().connectTimeout(TIME_OUT, TimeUnit.MILLISECONDS)
-                .writeTimeout(TIME_OUT, TimeUnit.MILLISECONDS).readTimeout(300000, TimeUnit.MILLISECONDS).build();
         FormBody.Builder formB = new FormBody.Builder();
         //头数据
         Headers.Builder hb = new Headers.Builder();
@@ -273,7 +270,7 @@ public class HttpUtil {
         }
 
         Request request = new Request.Builder().url(url).post(formB.build()).headers(hb.build()).build();
-        Call call = client.newCall(request);
+        Call call = okHttpClient.newCall(request);
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
